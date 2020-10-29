@@ -2,8 +2,9 @@ package tritonhttp
 
 import (
 	"os"
-	"encoding/csv"
+	"bufio"
 	"log"
+	"strings"
 )
 /** 
 	Initialize the tritonhttp server by populating HttpServer structure
@@ -14,19 +15,21 @@ func NewHttpdServer(port, docRoot, mimePath string) (*HttpServer, error) {
 	// Initialize mimeMap for server to refer
 
 	// Return pointer to HttpServer
+	log.Println("here!")
 	mimeMap := make(map[string]string)
 	file, err := os.Open(mimePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	csv_reader := csv.NewReader(file)
-	if parts, err := csv_reader.Read(); err == nil {
-		log.Println(parts)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan(){
+		parts := strings.Split(scanner.Text()," ")
 		mimeMap[parts[0]] = parts[1]
-	} else {
-		log.Fatal(err)
 	}
+	//log.Println(mimeMap)
+	
 
 
 	http := HttpServer{ServerPort: port, DocRoot: docRoot, MIMEPath: mimePath, MIMEMap: mimeMap}
