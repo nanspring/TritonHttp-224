@@ -9,6 +9,7 @@ type HttpServer	struct {
 
 type HttpResponseHeader struct {
 	// Add any fields required for the response here
+	InitialLine string
 	Server string
 	LastModified string
 	ContentType string
@@ -19,5 +20,6 @@ type HttpResponseHeader struct {
 type HttpRequestHeader struct {
 	// Add any fields required for the request here
 	Host string
+	URL string
 	Connection string
 }

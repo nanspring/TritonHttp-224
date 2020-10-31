@@ -1,10 +1,7 @@
 package tritonhttp
 
 import (
-	"os"
-	"bufio"
 	"log"
-	"strings"
 	"net"
 )
 /** 
@@ -19,19 +16,8 @@ func NewHttpdServer(port, docRoot, mimePath string) (*HttpServer, error) {
 	log.Println("Server has mime types file at:", mimePath)
 
 	// read mimeMap file to a map
-	mimeMap := make(map[string]string)
-	file, err := os.Open(mimePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan(){
-		parts := strings.Split(scanner.Text()," ")
-		mimeMap[parts[0]] = parts[1]
-	}
-
+	mimeMap,err := ParseMIME(mimePath)
+	log.Println("hello")
 
 	hs := HttpServer{ServerPort: port, DocRoot: docRoot, MIMEPath: mimePath, MIMEMap: mimeMap}
 	return &hs, err

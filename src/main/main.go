@@ -28,6 +28,8 @@ const SERVER_PORT string = "port"
 const DOC_ROOT_PATH string = "doc_root"
 const MIME_TYPE_PATH string = "mime_types"
 
+
+
 func main() {
 	var err error
 
