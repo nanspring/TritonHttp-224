@@ -17,7 +17,6 @@ func NewHttpdServer(port, docRoot, mimePath string) (*HttpServer, error) {
 
 	// read mimeMap file to a map
 	mimeMap,err := ParseMIME(mimePath)
-	log.Println("hello")
 
 	hs := HttpServer{ServerPort: port, DocRoot: docRoot, MIMEPath: mimePath, MIMEMap: mimeMap}
 	return &hs, err
