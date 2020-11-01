@@ -29,16 +29,21 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 	// Update any ongoing requests
 	// If reusing read buffer, truncate it before next read
 
-	req_header := HttpRequestHeader{Host:"", URL:"", Connection:"open"}
+	req_header := HttpRequestHeader{Host:"",Connection:""}
+	res_header := HttpResponseHeader{ResponseCode: "", Server: SERVER_NAME, LastModified: "", ContentType: "", ContentLength: "", Connection:"open"}
 	remaining := ""
 	buf := make([]byte,1024)
+
+	// set read reqeust initial line to false
+	read_initial := false
+
+
 	for {
 
 		//set times out before each read
 		err := conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 		
-		// initial line
-		read_initial := false
+		
 
 		if err != nil {
 			log.Println("set times out fail :",err)
@@ -54,8 +59,13 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 			if len(remaining) > 0{
 				hs.handleBadRequest(conn)
 			}
-			conn.Close()
-			return
+			if err1, ok := err.(net.Error); ok && err1.Timeout() {
+				log.Println("Timeout", err1)
+				log.Println("connection close")
+				conn.Close()
+				return
+            }
+			
 		}
 
 		data  := buf[:size]
@@ -63,15 +73,22 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 
 		//check if remaining contains full request. If not, connection wait to read again before timesout
 		for strings.Contains(remaining,DELIMITER){
-			// todo
+			
 			i := strings.Index(remaining,DELIMITER)
+			line := remaining[:i] // get the full line
 			log.Println("remain: ",remaining)
+
 			//parse initial line
 			if !read_initial{
-				code := hs.ExamParseInitalLine(remaining[:i],&req_header, conn)
-				log.Println(code)
-				log.Println("after: ",remaining)
+
+				hs.ExamParseInitalLine(line, &res_header, conn)
+				log.Println(res_header.ResponseCode)
 				read_initial = true
+
+			}else if len(line) != 0{ // parse request key value pair
+				hs.ParseKeyValuePair(line, &req_header,conn)
+			}else{  //line is empty, meaning it is the end of full request, return response
+				hs.sendResponse(res_header,conn)
 			}
 			remaining = remaining [i+2:]
 		}
