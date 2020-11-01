@@ -88,7 +88,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 			}else if len(line) != 0{ // parse request key value pair
 				hs.ParseKeyValuePair(line, &req_header,conn)
 			}else{  //line is empty, meaning it is the end of full request, return response
-				hs.sendResponse(res_header,conn)
+				hs.sendResponse(&req_header,&res_header,conn)
 			}
 			remaining = remaining [i+2:]
 		}

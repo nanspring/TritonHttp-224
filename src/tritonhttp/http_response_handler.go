@@ -38,7 +38,7 @@ func (hs *HttpServer) handleResponse(responseHeader *HttpResponseHeader, conn ne
 
 }
 
-func (hs *HttpServer) sendResponse(responseHeader HttpResponseHeader, conn net.Conn) {
+func (hs *HttpServer) sendResponse(res_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) {
 	//panic("todo - sendResponse")
 
 	// Send headers
@@ -46,7 +46,12 @@ func (hs *HttpServer) sendResponse(responseHeader HttpResponseHeader, conn net.C
 	// Send file if required
 
 	// Hint - Use the bufio package to write response
-	response := hs.handleResponse(&responseHeader, conn)
+
+	if responseHeader.ResponseCode == "404"{
+		hs.handleFileNotFoundRequest(res_header, conn)
+		return
+	}
+	response := hs.handleResponse(responseHeader, conn)
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 }
