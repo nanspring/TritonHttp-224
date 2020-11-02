@@ -56,7 +56,12 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		return
 	}
 	mType := url[strings.Index(url,"."):]
-	res_header.ContentType = hs.MIMEMap[mType]
+	if val, ok := hs.MIMEMap[mType]; ok{
+		res_header.ContentType = val
+	}
+	else{
+		res_header.ContentType = "application/octet-stream"
+	}
 	
 	
 	res_header.ResponseCode = "200 OK"
@@ -89,6 +94,7 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 		hs.handleBadRequest(conn)
 	}
 }
+
 func fileExists(filename string,res_header *HttpResponseHeader) bool {
     file, err := os.Stat(filename)
     if os.IsNotExist(err) {
