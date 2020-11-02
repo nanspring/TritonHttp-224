@@ -8,7 +8,9 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"path/filepath"
 )
+const BUFFERSIZE int = 1024
 /** 
 	Load and parse the mime.types file 
 **/
@@ -38,7 +40,6 @@ func ParseMIME(MIMEPath string) (MIMEMap map[string]string, err error) {
 **/
 func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpResponseHeader, conn net.Conn){
 	parts := strings.Split(inital_line, " ")
-	log.Println(parts)
 	if len(parts) != 3 || parts[0] != "GET" || parts[2] != "HTTP/1.1"{
 		res_header.ResponseCode = "400"
 		hs.handleBadRequest(conn)
@@ -55,17 +56,22 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		res_header.ResponseCode = "404"
 		return
 	}
+	// check whether escape the doc root
+	fileAbsPath, _ := filepath.Abs(filePath)
+	RootPath, _ := filepath.Abs(hs.DocRoot)
+	matched := strings.Contains(fileAbsPath, RootPath)
+	if !matched{
+		res_header.ResponseCode = "404"
+		return
+	}
 	mType := url[strings.Index(url,"."):]
 	if val, ok := hs.MIMEMap[mType]; ok{
 		res_header.ContentType = val
-	}
-	else{
+	}else{
+		log.Println("Unkown MIME type")
 		res_header.ContentType = "application/octet-stream"
 	}
-	
-	
 	res_header.ResponseCode = "200 OK"
-
 }
 
 /**
@@ -100,13 +106,12 @@ func fileExists(filename string,res_header *HttpResponseHeader) bool {
     if os.IsNotExist(err) {
         return false
 	}else if !file.IsDir(){
+		filesize := strconv.FormatInt(file.Size(),10)
 		res_header.LastModified = file.ModTime().Format(time.RFC850)
-		res_header.ContentLength = strconv.FormatInt(file.Size(),10)
+		res_header.ContentLength = filesize
+		res_header.FilePath = filename
 		return true
 	}else{
 		return false
-	}	
+	}
 }
-
-
-

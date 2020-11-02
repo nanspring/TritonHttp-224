@@ -2,6 +2,9 @@ package tritonhttp
 
 import (
 	"net"
+	"log"
+	"io"
+	"os"
 )
 
 
@@ -38,7 +41,7 @@ func (hs *HttpServer) handleResponse(responseHeader *HttpResponseHeader, conn ne
 
 }
 
-func (hs *HttpServer) sendResponse(res_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) {
+func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) (close int){
 	//panic("todo - sendResponse")
 
 	// Send headers
@@ -48,10 +51,31 @@ func (hs *HttpServer) sendResponse(res_header *HttpRequestHeader, responseHeader
 	// Hint - Use the bufio package to write response
 
 	if responseHeader.ResponseCode == "404"{
-		hs.handleFileNotFoundRequest(res_header, conn)
-		return
+		hs.handleFileNotFoundRequest(req_header, conn)
+		return 0
 	}
 	response := hs.handleResponse(responseHeader, conn)
 	bResponse := []byte(response)
 	conn.Write(bResponse)
+	file, err := os.Open(responseHeader.FilePath)
+	defer file.Close()
+	if err != nil {
+		log.Println("open body file error", err)
+		return 0
+	}
+	sendBuffer := make([]byte, BUFFERSIZE)
+	for {
+		_, err = file.Read(sendBuffer)
+		if err == io.EOF {
+			break
+		}
+		conn.Write(sendBuffer)
+	}
+	if req_header.Connection == "close"{
+		log.Println("clinet send close request, close connection")
+		conn.Close()
+		return 1
+	}else{
+		return 0
+	}
 }

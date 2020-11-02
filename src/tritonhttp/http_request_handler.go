@@ -30,7 +30,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 	// If reusing read buffer, truncate it before next read
 
 	req_header := HttpRequestHeader{Host:"",Connection:""}
-	res_header := HttpResponseHeader{ResponseCode: "", Server: SERVER_NAME, LastModified: "", ContentType: "", ContentLength: "", Connection:"open"}
+	res_header := HttpResponseHeader{ResponseCode: "", Server: SERVER_NAME, LastModified: "", ContentType: "", ContentLength: "", Connection:"open", FilePath: ""}
 	remaining := ""
 	buf := make([]byte,1024)
 
@@ -42,8 +42,6 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 
 		//set times out before each read
 		err := conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-		
-		
 
 		if err != nil {
 			log.Println("set times out fail :",err)
@@ -65,7 +63,6 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 				conn.Close()
 				return
             }
-			
 		}
 
 		data  := buf[:size]
@@ -73,22 +70,22 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 
 		//check if remaining contains full request. If not, connection wait to read again before timesout
 		for strings.Contains(remaining,DELIMITER){
-			
 			i := strings.Index(remaining,DELIMITER)
 			line := remaining[:i] // get the full line
-			log.Println("remain: ",remaining)
 
 			//parse initial line
 			if !read_initial{
 
 				hs.ExamParseInitalLine(line, &res_header, conn)
-				log.Println(res_header.ResponseCode)
 				read_initial = true
 
 			}else if len(line) != 0{ // parse request key value pair
 				hs.ParseKeyValuePair(line, &req_header,conn)
 			}else{  //line is empty, meaning it is the end of full request, return response
-				hs.sendResponse(&req_header,&res_header,conn)
+				close := hs.sendResponse(&req_header,&res_header, conn)
+				if close == 1{
+					return
+				}
 			}
 			remaining = remaining [i+2:]
 		}

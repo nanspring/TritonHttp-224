@@ -15,6 +15,7 @@ type HttpResponseHeader struct {
 	ContentType string
 	ContentLength string
 	Connection string
+	FilePath string
 }
 
 type HttpRequestHeader struct {
