@@ -51,6 +51,12 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 	// Send file if required
 
 	// Hint - Use the bufio package to write response
+
+	if len(req_header.Host) == 0{
+		hs.handleBadRequest(conn)
+		return false
+	}
+
 	if responseHeader.ResponseCode == "404"{
 		hs.handleFileNotFoundRequest(conn)
 		return false
