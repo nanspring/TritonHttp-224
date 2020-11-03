@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"path"
 	"path/filepath"
 )
 /** 
@@ -50,7 +51,7 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		url = "/index.html"
 	}
 
-	filePath := hs.DocRoot + url
+	filePath := path.Join(hs.DocRoot, url)
 	if !fileExists(filePath,res_header){
 		res_header.ResponseCode = "404"
 		return
@@ -63,7 +64,7 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		res_header.ResponseCode = "404"
 		return
 	}
-	mType := url[strings.Index(url,"."):]
+	mType := fileAbsPath[strings.Index(fileAbsPath,"."):]
 	if val, ok := hs.MIMEMap[mType]; ok{
 		res_header.ContentType = val
 	}else{
@@ -98,12 +99,16 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 	}else{
 		hs.handleBadRequest(conn)
 	}
+	if len(req_header.Host) == 0 {
+		hs.handleBadRequest(conn)
+		return
+	}
 }
 
 func fileExists(filename string,res_header *HttpResponseHeader) bool {
     file, err := os.Stat(filename)
     if os.IsNotExist(err) {
-        return false
+		return false
 	}else if !file.IsDir(){
 		filesize := strconv.FormatInt(file.Size(),10)
 		res_header.LastModified = file.ModTime().Format(time.RFC850)
