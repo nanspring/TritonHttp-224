@@ -38,18 +38,18 @@ func ParseMIME(MIMEPath string) (MIMEMap map[string]string, err error) {
 	400 means bad request
 	404 means file not found
 **/
-func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpResponseHeader, conn net.Conn){
+func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpResponseHeader, conn net.Conn) bool {
 	parts := strings.Split(inital_line, " ")
 	if len(parts) != 3 || parts[0] != "GET" || parts[2] != "HTTP/1.1"{
 		res_header.ResponseCode = "400"
 		hs.handleBadRequest(conn)
-		return
+		return true
 	}
 	url := parts[1]
 	if (len(url)==0 || url[0] != '/'){
 		res_header.ResponseCode = "400"
 		hs.handleBadRequest(conn)
-		return
+		return true
 	}
 	if(url == "/"){
 		url = "/index.html"
@@ -57,14 +57,14 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 	fileAbsPath, _ := filepath.Abs(path.Join(hs.DocRoot, url))
 	if !fileExists(fileAbsPath,res_header){
 		res_header.ResponseCode = "404"
-		return
+		return false
 	}
 	// check whether escape the doc root
 	RootPath, _ := filepath.Abs(hs.DocRoot)
 	matched := strings.Contains(fileAbsPath, RootPath)
 	if !matched{
 		res_header.ResponseCode = "404"
-		return
+		return false
 	}
 	mType := fileAbsPath[strings.Index(fileAbsPath,"."):]
 	if val, ok := hs.MIMEMap[mType]; ok{
@@ -74,18 +74,20 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		res_header.ContentType = "application/octet-stream"
 	}
 	res_header.ResponseCode = "200 OK"
+	return false 
 }
 
 /**
 	check request key value pair
 	put key value pair to request header
 **/
-func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHeader, conn net.Conn){
+func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHeader, conn net.Conn) bool{
 	if strings.Contains(input,":"){
 		parts := strings.Split(input, ":")
 
 		if len(parts) != 2 {
 			hs.handleBadRequest(conn)
+			return true
 		}else{
 
 			key := parts[0]
@@ -100,10 +102,13 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 		}
 	}else{
 		hs.handleBadRequest(conn)
+		return true
 	}
 	if len(req_header.Host) == 0{
 		hs.handleBadRequest(conn)
+		return true
 	}
+	return false
 }
 
 func fileExists(filename string,res_header *HttpResponseHeader) bool {

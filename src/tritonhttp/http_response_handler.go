@@ -13,8 +13,6 @@ func (hs *HttpServer) handleBadRequest(conn net.Conn) {
 	//panic("todo - handleBadRequest")
 	response := "HTTP/1.1 400 Bad Request" + DELIMITER
 	response += "Server: "+SERVER_NAME + DELIMITER
-	response += "Content-Type: text/html"+ DELIMITER
-	response += "Content-Length: 0"+ DELIMITER
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 	conn.Close()
@@ -24,8 +22,6 @@ func (hs *HttpServer) handleFileNotFoundRequest(conn net.Conn) {
 	//panic("todo - handleFileNotFoundRequest")
 	response := "HTTP/1.1 404 Not Found" + DELIMITER
 	response += "Server: " + SERVER_NAME+DELIMITER
-	response += "Content-Type: text/html"+ DELIMITER
-	response += "Content-Length: 0"+ DELIMITER
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 }
@@ -45,7 +41,7 @@ func (hs *HttpServer) handleResponse(req_header *HttpRequestHeader, responseHead
 
 }
 
-func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) (close int){
+func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) bool{
 	//panic("todo - sendResponse")
 
 	// Send headers
@@ -55,7 +51,7 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 	// Hint - Use the bufio package to write response
 	if responseHeader.ResponseCode == "404"{
 		hs.handleFileNotFoundRequest(conn)
-		return 0
+		return false
 	}
 	response := hs.handleResponse(req_header, responseHeader, conn)
 	bResponse := []byte(response)
@@ -64,7 +60,7 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 	defer file.Close()
 	if err != nil {
 		log.Println("open body file error", err)
-		return 0
+		return false
 	}
 	reader := bufio.NewReader(file)
 	buffer := make([]byte, BUFFERSIZE)
@@ -78,8 +74,8 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 	if req_header.Connection == "close"{
 		log.Println("clinet send close request, close connection")
 		conn.Close()
-		return 1
+		return true
 	}else{
-		return 0
+		return false
 	}
 }
