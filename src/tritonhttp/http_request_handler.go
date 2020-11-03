@@ -78,13 +78,11 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 			//parse initial line
 			if !read_initial{
 				if !hs.ExamParseInitalLine(line, &res_header, conn){
-					return
 				}
 				read_initial = true
 
 			}else if len(line) != 0{ // parse request key value pair 
 				if !hs.ParseKeyValuePair(line, &req_header,conn){
-					return
 				}
 			}else{  //line is empty, meaning it is the end of full request, return response
 				close = hs.sendResponse(&req_header, &res_header, conn)
