@@ -10,7 +10,6 @@ import (
 	"time"
 	"path/filepath"
 )
-const BUFFERSIZE int = 1024
 /** 
 	Load and parse the mime.types file 
 **/

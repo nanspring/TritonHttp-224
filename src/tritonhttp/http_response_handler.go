@@ -5,8 +5,9 @@ import (
 	"log"
 	"io"
 	"os"
+	"bufio"
 )
-
+const BUFFERSIZE int = 1024
 
 func (hs *HttpServer) handleBadRequest(conn net.Conn) {
 	//panic("todo - handleBadRequest")
@@ -63,13 +64,15 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 		log.Println("open body file error", err)
 		return 0
 	}
-	sendBuffer := make([]byte, BUFFERSIZE)
-	for {
-		_, err = file.Read(sendBuffer)
+	reader := bufio.NewReader(file)
+	log.Println(responseHeader.FilePath)
+	buffer := make([]byte, BUFFERSIZE)
+	for{
+		size, err := reader.Read(buffer)
 		if err == io.EOF {
 			break
 		}
-		conn.Write(sendBuffer)
+		conn.Write(buffer[:size])
 	}
 	if req_header.Connection == "close"{
 		log.Println("clinet send close request, close connection")
