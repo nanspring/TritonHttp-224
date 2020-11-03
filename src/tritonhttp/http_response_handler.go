@@ -50,13 +50,11 @@ func (hs *HttpServer) handleResponse(req_header *HttpRequestHeader, responseHead
 func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) bool{
 
 	if len(req_header.Host) == 0{
-		log.Println("br 1")
 		hs.handleBadRequest(conn)
 		return false
 	}
 
 	if responseHeader.ResponseCode == "404"{
-		log.Println("fnf 1", responseHeader.FilePath)
 		hs.handleFileNotFoundRequest(conn)
 		return false
 	}
