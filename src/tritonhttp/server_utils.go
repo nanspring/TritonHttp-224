@@ -120,6 +120,12 @@ func fileValid(filename string, root string, res_header *HttpResponseHeader) boo
 		res_header.ContentLength = filesize
 		res_header.FilePath = filename
 		return true	
+	}else if !file.IsDir(){
+		filesize := strconv.FormatInt(file.Size(),10)
+		res_header.LastModified = file.ModTime().Format(time.RFC850)
+		res_header.ContentLength = filesize
+		res_header.FilePath = filename
+		return true	
 	}else{
 		return false
 	}

@@ -71,7 +71,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 		remaining += string(data)
 
 		//check if remaining contains full request. If not, connection wait to read again before timesout
-		for strings.Contains(remaining,DELIMITER){
+		for strings.Contains(remaining, DELIMITER){
 			i := strings.Index(remaining,DELIMITER)
 			line := remaining[:i] // get the full line
 
