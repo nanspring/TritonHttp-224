@@ -100,7 +100,7 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 		}
 	}else{
 		//log.Println("br 5")
-		// hs.handleBadRequest(conn)
+		hs.handleBadRequest(conn)
 		return false
 	}
 	
