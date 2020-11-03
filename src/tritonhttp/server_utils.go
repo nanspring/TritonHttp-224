@@ -42,12 +42,14 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 	parts := strings.Split(inital_line, " ")
 	if len(parts) != 3 || parts[0] != "GET" || parts[2] != "HTTP/1.1"{
 		res_header.ResponseCode = "400"
+		log.Println("br 2")
 		hs.handleBadRequest(conn)
 		return false
 	}
 	url := parts[1]
 	if (len(url)==0 || url[0] != '/'){
 		res_header.ResponseCode = "400"
+		log.Println("br 3")
 		hs.handleBadRequest(conn)
 		return false
 	}
@@ -81,6 +83,7 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 		parts := strings.Split(input, ":")
 
 		if len(parts) != 2 {
+			log.Println("br 4")
 			hs.handleBadRequest(conn)
 			return false
 		}else{
@@ -96,7 +99,8 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 			}
 		}
 	}else{
-		hs.handleBadRequest(conn)
+		//log.Println("br 5")
+		// hs.handleBadRequest(conn)
 		return false
 	}
 	

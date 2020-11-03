@@ -43,30 +43,32 @@ func (hs *HttpServer) handleResponse(req_header *HttpRequestHeader, responseHead
 
 }
 
+/**
+	send response
+	send file if required
+**/
 func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) bool{
-	//panic("todo - sendResponse")
-
-	// Send headers
-
-	// Send file if required
-
-	// Hint - Use the bufio package to write response
 
 	if len(req_header.Host) == 0{
+		log.Println("br 1")
 		hs.handleBadRequest(conn)
 		return false
 	}
 
 	if responseHeader.ResponseCode == "404"{
+		log.Println("fnf 1", responseHeader.FilePath)
 		hs.handleFileNotFoundRequest(conn)
 		return false
 	}
 	response := hs.handleResponse(req_header, responseHeader, conn)
 	bResponse := []byte(response)
 	conn.Write(bResponse)
+
+	// read requesting file
 	file, err := os.Open(responseHeader.FilePath)
 	defer file.Close()
 	if err != nil {
+		log.Println("file path", responseHeader.FilePath)
 		log.Println("open body file error", err)
 		return false
 	}
@@ -84,6 +86,16 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 		conn.Close()
 		return true
 	}else{
+
+		//clear req_header and res_header for new pipeline request
+		req_header.Host = ""
+		req_header.Connection = ""
+		responseHeader.ResponseCode = ""
+		responseHeader.LastModified = "" 
+		responseHeader.ContentType = ""
+		responseHeader.ContentLength = ""
+		responseHeader.Connection = "open"
+		responseHeader.FilePath = ""
 		return false
 	}
 }

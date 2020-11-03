@@ -73,7 +73,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 		for strings.Contains(remaining, DELIMITER){
 			i := strings.Index(remaining, DELIMITER)
 			line := remaining[:i] // get the full line
-
+			log.Println("LINE: ",line)
 			//parse initial line
 			if !read_initial{
 				if !hs.ExamParseInitalLine(line, &res_header, conn){
@@ -84,10 +84,12 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 				if !hs.ParseKeyValuePair(line, &req_header,conn){
 				}
 			}else{  //line is empty, meaning it is the end of full request, return response
+				log.Println("send response... ")
 				close = hs.sendResponse(&req_header, &res_header, conn)
 				if close{
 					return
 				}
+				read_initial = false
 			}
 			remaining = remaining [i+2:]
 		}
