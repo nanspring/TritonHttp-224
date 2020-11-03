@@ -43,29 +43,23 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 	if len(parts) != 3 || parts[0] != "GET" || parts[2] != "HTTP/1.1"{
 		res_header.ResponseCode = "400"
 		hs.handleBadRequest(conn)
-		return true
+		return false
 	}
 	url := parts[1]
 	if (len(url)==0 || url[0] != '/'){
 		res_header.ResponseCode = "400"
 		hs.handleBadRequest(conn)
-		return true
+		return false
 	}
 	if(url == "/"){
 		url = "/index.html"
 	}
 	fileAbsPath, _ := filepath.Abs(path.Join(hs.DocRoot, url))
-	if !fileExists(fileAbsPath,res_header){
-		res_header.ResponseCode = "404"
+	rootAbsPath, _ := filepath.Abs(hs.DocRoot)
+	if !fileValid(fileAbsPath, rootAbsPath, res_header){
 		return false
 	}
-	// check whether escape the doc root
-	RootPath, _ := filepath.Abs(hs.DocRoot)
-	matched := strings.Contains(fileAbsPath, RootPath)
-	if !matched{
-		res_header.ResponseCode = "404"
-		return false
-	}
+	fileAbsPath = res_header.FilePath
 	mType := fileAbsPath[strings.Index(fileAbsPath,"."):]
 	if val, ok := hs.MIMEMap[mType]; ok{
 		res_header.ContentType = val
@@ -74,7 +68,7 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		res_header.ContentType = "application/octet-stream"
 	}
 	res_header.ResponseCode = "200 OK"
-	return false 
+	return true
 }
 
 /**
@@ -87,7 +81,7 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 
 		if len(parts) != 2 {
 			hs.handleBadRequest(conn)
-			return true
+			return false
 		}else{
 
 			key := parts[0]
@@ -102,26 +96,38 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 		}
 	}else{
 		hs.handleBadRequest(conn)
-		return true
+		return false
 	}
 	if len(req_header.Host) == 0{
 		hs.handleBadRequest(conn)
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
-func fileExists(filename string,res_header *HttpResponseHeader) bool {
-    file, err := os.Stat(filename)
-    if os.IsNotExist(err) {
-		return false
-	}else if !file.IsDir(){
-		filesize := strconv.FormatInt(file.Size(),10)
-		res_header.LastModified = file.ModTime().Format(time.RFC850)
-		res_header.ContentLength = filesize
-		res_header.FilePath = filename
-		return true
-	}else{
+func fileValid(filename string, root string, res_header *HttpResponseHeader) bool {
+	file, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		res_header.ResponseCode = "404"
 		return false
 	}
+	// check whether escape the doc root
+	matched := strings.Contains(filename, root)
+	if !matched{
+		res_header.ResponseCode = "404"
+		return false
+	}
+	if file.IsDir() && filename == root{
+		filename = path.Join(filename, "index.html")
+		file, _ = os.Stat(filename)
+	}
+	if file.IsDir(){
+		res_header.ResponseCode = "404"
+		return false
+	}
+	filesize := strconv.FormatInt(file.Size(),10)
+	res_header.LastModified = file.ModTime().Format(time.RFC850)
+	res_header.ContentLength = filesize
+	res_header.FilePath = filename
+	return true
 }
