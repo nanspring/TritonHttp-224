@@ -45,19 +45,21 @@ func (hs *HttpServer) ExamParseInitalLine(inital_line string,res_header *HttpRes
 		hs.handleBadRequest(conn)
 		return
 	}
-
 	url := parts[1]
+	if (len(url)==0 || url[0] != '/'){
+		res_header.ResponseCode = "400"
+		hs.handleBadRequest(conn)
+		return
+	}
 	if(url == "/"){
 		url = "/index.html"
 	}
-
-	filePath := path.Join(hs.DocRoot, url)
-	if !fileExists(filePath,res_header){
+	fileAbsPath, _ := filepath.Abs(path.Join(hs.DocRoot, url))
+	if !fileExists(fileAbsPath,res_header){
 		res_header.ResponseCode = "404"
 		return
 	}
 	// check whether escape the doc root
-	fileAbsPath, _ := filepath.Abs(filePath)
 	RootPath, _ := filepath.Abs(hs.DocRoot)
 	matched := strings.Contains(fileAbsPath, RootPath)
 	if !matched{
@@ -99,9 +101,8 @@ func (hs *HttpServer) ParseKeyValuePair(input string, req_header *HttpRequestHea
 	}else{
 		hs.handleBadRequest(conn)
 	}
-	if len(req_header.Host) == 0 {
+	if len(req_header.Host) == 0{
 		hs.handleBadRequest(conn)
-		return
 	}
 }
 

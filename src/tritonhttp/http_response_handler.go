@@ -30,13 +30,16 @@ func (hs *HttpServer) handleFileNotFoundRequest(conn net.Conn) {
 	conn.Write(bResponse)
 }
 
-func (hs *HttpServer) handleResponse(responseHeader *HttpResponseHeader, conn net.Conn) (result string) {
+func (hs *HttpServer) handleResponse(req_header *HttpRequestHeader, responseHeader *HttpResponseHeader, conn net.Conn) (result string) {
 	//panic("todo - handleResponse")
 	result += "HTTP/1.1 "+responseHeader.ResponseCode+DELIMITER
 	result += "Server: " + responseHeader.Server + DELIMITER
 	result += "Last-Modified: " + responseHeader.LastModified + DELIMITER
 	result += "Content-Type: " + responseHeader.ContentType + DELIMITER
 	result += "Content-Length: " + responseHeader.ContentLength + DELIMITER
+	if req_header.Connection == "close"{
+		result += "Connection: close" +DELIMITER
+	}
 	result += DELIMITER
 	return result
 
@@ -50,15 +53,11 @@ func (hs *HttpServer) sendResponse(req_header *HttpRequestHeader, responseHeader
 	// Send file if required
 
 	// Hint - Use the bufio package to write response
-
 	if responseHeader.ResponseCode == "404"{
 		hs.handleFileNotFoundRequest(conn)
 		return 0
 	}
-	response := hs.handleResponse(responseHeader, conn)
-	if req_header.Connection == "close"{
-		response += "Connection: close" + SERVER_NAME+DELIMITER
-	}
+	response := hs.handleResponse(req_header, responseHeader, conn)
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 	file, err := os.Open(responseHeader.FilePath)
