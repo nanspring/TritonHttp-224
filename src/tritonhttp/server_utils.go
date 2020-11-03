@@ -112,7 +112,7 @@ func fileValid(filename string, root string, res_header *HttpResponseHeader) boo
 		return false
 	}else if !strings.Contains(filename, root){
 		return false
-	}else if file.IsDir() && filename == root{
+	}else if file.IsDir(){
 		filename = path.Join(filename, "index.html")
 		file, _ = os.Stat(filename)
 		filesize := strconv.FormatInt(file.Size(),10)
@@ -120,12 +120,6 @@ func fileValid(filename string, root string, res_header *HttpResponseHeader) boo
 		res_header.ContentLength = filesize
 		res_header.FilePath = filename
 		return true	
-	}else if !file.IsDir(){
-		filesize := strconv.FormatInt(file.Size(),10)
-		res_header.LastModified = file.ModTime().Format(time.RFC850)
-		res_header.ContentLength = filesize
-		res_header.FilePath = filename
-		return true
 	}else{
 		return false
 	}
