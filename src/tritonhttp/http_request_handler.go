@@ -70,6 +70,13 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 		data  := buf[:size]
 		remaining += string(data)
 
+		if len(remaining) == 0{
+			log.Println("Timeout with partial request")
+			log.Println("connection close")
+			conn.Close()
+			return
+		}
+
 		//check if remaining contains full request. If not, connection wait to read again before timesout
 		for strings.Contains(remaining, DELIMITER){
 			i := strings.Index(remaining,DELIMITER)
