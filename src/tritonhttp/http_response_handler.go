@@ -13,6 +13,7 @@ func (hs *HttpServer) handleBadRequest(conn net.Conn) {
 	//panic("todo - handleBadRequest")
 	response := "HTTP/1.1 400 Bad Request" + DELIMITER
 	response += "Server: "+SERVER_NAME + DELIMITER
+	response += DELIMITER
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 	conn.Close()
@@ -22,6 +23,7 @@ func (hs *HttpServer) handleFileNotFoundRequest(conn net.Conn) {
 	//panic("todo - handleFileNotFoundRequest")
 	response := "HTTP/1.1 404 Not Found" + DELIMITER
 	response += "Server: " + SERVER_NAME+DELIMITER
+	response += DELIMITER
 	bResponse := []byte(response)
 	conn.Write(bResponse)
 }
