@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 	"log"
+	"io"
 )
 
 // Delimiter and Server name
@@ -42,40 +43,31 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 	for {
 
 		//set times out before each read
-		err := conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-
-		if err != nil {
-			log.Println("set times out fail :",err)
-			return
-		}
+		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 		// connection read request into buffer
 		size, err := conn.Read(buf)
-
-		//if times out appear, need to close connection
-		if err != nil{
-			//if there is incomplete request, it is a bad request
-			if len(remaining) > 0{
-				hs.handleBadRequest(conn)
-				return 
-			}
-			if err1, ok := err.(net.Error); ok && err1.Timeout() {
+		if err != nil {
+			if err == io.EOF {
+				conn.Close()
+				return
+			} else if err1, ok := err.(net.Error); ok && err1.Timeout() {
+				if len(remaining) > 0{
+					hs.handleBadRequest(conn)
+					return 
+				}
 				log.Println("Timeout", err1)
 				log.Println("connection close")
 				conn.Close()
 				return
-            }
+			}else{
+				conn.Close()
+				return
+			}
 		}
 
 		data  := buf[:size]
 		remaining += string(data)
-
-		if len(remaining) == 0{
-			log.Println("Timeout with partial request")
-			log.Println("connection close")
-			hs.handleBadRequest(conn)
-			return
-		}
 
 		//check if remaining contains full request. If not, connection wait to read again before timesout
 		for strings.Contains(remaining, DELIMITER){
