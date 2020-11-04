@@ -33,25 +33,24 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 	req_header := HttpRequestHeader{Host:"",Connection:""}
 	res_header := HttpResponseHeader{ResponseCode: "", Server: SERVER_NAME, LastModified: "", ContentType: "", ContentLength: "", Connection:"open", FilePath: ""}
 	remaining := ""
+	timeout  := false
 	buf := make([]byte,1024)
 	var close bool
 
 	// set read reqeust initial line to false
-	read_initial := false
+	read_initial := true
 
 
 	for {
 
 		//set times out before each read
-		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-
+		if !timeout{
+			conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		}
 		// connection read request into buffer
 		size, err := conn.Read(buf)
 		if err != nil {
-			if err == io.EOF {
-				conn.Close()
-				return
-			} else if err1, ok := err.(net.Error); ok && err1.Timeout() {
+			if err1, ok := err.(net.Error); ok && err1.Timeout() {
 				if len(remaining) > 0{
 					hs.handleBadRequest(conn)
 					return 
@@ -60,10 +59,11 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 				log.Println("connection close")
 				conn.Close()
 				return
-			}else{
-				conn.Close()
-				return
+			}else if size == 0{
+				timeout = true
 			}
+		}else {
+			timeout = false 
 		}
 
 		data  := buf[:size]
@@ -74,10 +74,10 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 			i := strings.Index(remaining, DELIMITER)
 			line := remaining[:i] // get the full line
 			//parse initial line
-			if !read_initial{
+			if read_initial{
 				if !hs.ExamParseInitalLine(line, &res_header, conn){
 				}
-				read_initial = true
+				read_initial = false
 
 			}else if len(line) != 0{ // parse request key value pair 
 				if !hs.ParseKeyValuePair(line, &req_header,conn){
@@ -87,7 +87,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 				if close{
 					return
 				}
-				read_initial = false
+				read_initial = true
 			}
 			remaining = remaining [i+2:]
 		}
