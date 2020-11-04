@@ -50,7 +50,7 @@ func (hs *HttpServer) handleConnection(conn net.Conn) {
 		size, err := conn.Read(buf)
 		if err != nil {
 			if err1, ok := err.(net.Error); ok && err1.Timeout() {
-				if len(remaining) > 0{
+				if len(remaining) > 0 || read_initial == false{
 					hs.handleBadRequest(conn)
 					return 
 				}
