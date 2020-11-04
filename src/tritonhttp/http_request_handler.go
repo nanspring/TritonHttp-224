@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 	"log"
-	"io"
 )
 
 // Delimiter and Server name
